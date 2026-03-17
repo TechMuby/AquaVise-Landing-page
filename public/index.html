@@ -1,0 +1,927 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>AquaVise — Smarter Fish Farming Starts Here</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet" media="print" onload="this.media='all'"/>
+<noscript><link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet"/></noscript>
+<script src="https://cdn.tailwindcss.com"></script>
+<script>
+  tailwind.config = {
+    theme: {
+      extend: {
+        colors: {
+          aqua: { 50:'#f0fdfc', 100:'#ccfbf6', 200:'#99f4ed', 300:'#5ee8de', 400:'#2dd4cc', 500:'#14b8b0', 600:'#0d9490', 700:'#0f7674', 800:'#125f5e', 900:'#134e4d' },
+          teal: { DEFAULT:'#14b8b0' }
+        },
+        fontFamily: {
+          display: ['Syne', 'system-ui', 'sans-serif'],
+          body: ['DM Sans', 'system-ui', 'sans-serif'],
+        }
+      }
+    }
+  }
+</script>
+<style>
+  :root {
+    --teal: #14b8b0;
+    --teal-light: #5ee8de;
+    --teal-dark: #0d9490;
+    --aqua-faint: #f0fdfc;
+    --white: #ffffff;
+    --text-dark: #0a2322;
+    --text-mid: #2d5453;
+    --text-muted: #6b9e9c;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html { scroll-behavior: smooth; }
+  body { font-family: 'DM Sans', system-ui, sans-serif; background: #fff; color: var(--text-dark); overflow-x: hidden; }
+
+  /* ── NOISE OVERLAY ── */
+  body::before {
+    content: '';
+    position: fixed; inset: 0; z-index: 0; pointer-events: none;
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.03'/%3E%3C/svg%3E");
+    background-size: 200px;
+    opacity: .6;
+  }
+
+  /* ── NAVBAR ── */
+  #navbar {
+    position: fixed; top: 0; left: 0; right: 0; z-index: 1000;
+    padding: 1.2rem 2rem;
+    transition: background .35s, backdrop-filter .35s, box-shadow .35s;
+  }
+  #navbar.scrolled {
+    background: rgba(255,255,255,.85);
+    backdrop-filter: blur(16px);
+    box-shadow: 0 1px 32px rgba(20,184,176,.08);
+    border-bottom: 1px solid rgba(20,184,176,.1);
+  }
+  .nav-link {
+    font-family: 'DM Sans', system-ui, sans-serif; font-weight: 500; font-size: .9rem;
+    color: var(--text-mid); letter-spacing: .02em;
+    position: relative; padding-bottom: 2px;
+    transition: color .2s;
+  }
+  .nav-link::after {
+    content: ''; position: absolute; bottom: 0; left: 0; right: 0;
+    height: 2px; background: var(--teal);
+    transform: scaleX(0); transform-origin: left;
+    transition: transform .25s ease;
+  }
+  .nav-link:hover { color: var(--teal); }
+  .nav-link:hover::after { transform: scaleX(1); }
+
+  /* ── HERO ── */
+  #hero {
+    min-height: 100vh;
+    background: linear-gradient(135deg, #f0fdfc 0%, #e0f7f6 40%, #ffffff 100%);
+    display: flex; align-items: center; position: relative; overflow: hidden;
+  }
+  .hero-orb {
+    position: absolute; border-radius: 50%; filter: blur(90px); pointer-events: none;
+  }
+  .hero-orb-1 { width: 600px; height: 600px; background: rgba(20,184,176,.15); top: -200px; right: -100px; }
+  .hero-orb-2 { width: 400px; height: 400px; background: rgba(94,232,222,.12); bottom: -100px; left: -50px; }
+
+  /* ── BUTTONS ── */
+  .btn-primary {
+    display: inline-flex; align-items: center; gap: .5rem;
+    background: linear-gradient(135deg, var(--teal), var(--teal-light));
+    color: #fff; font-family: 'Syne', system-ui, sans-serif; font-weight: 600; font-size: .9rem;
+    padding: .85rem 2rem; border-radius: 100px;
+    box-shadow: 0 8px 32px rgba(20,184,176,.35);
+    transition: transform .2s, box-shadow .2s;
+    cursor: pointer; border: none; letter-spacing: .03em;
+  }
+  .btn-primary:hover { transform: translateY(-2px); box-shadow: 0 12px 40px rgba(20,184,176,.5); }
+  .btn-outline {
+    display: inline-flex; align-items: center; gap: .5rem;
+    border: 2px solid var(--teal); color: var(--teal);
+    font-family: 'Syne', system-ui, sans-serif; font-weight: 600; font-size: .9rem;
+    padding: .75rem 1.8rem; border-radius: 100px;
+    background: transparent;
+    transition: background .2s, color .2s, transform .2s;
+    cursor: pointer; letter-spacing: .03em;
+  }
+  .btn-outline:hover { background: var(--teal); color: #fff; transform: translateY(-2px); }
+
+  /* ── FLOATING FISH ── */
+  .fish-container { position: relative; width: 100%; height: 420px; }
+  .fish-svg { animation: floatFish 6s ease-in-out infinite; transform-origin: center; }
+  @keyframes floatFish {
+    0%,100% { transform: translateY(0) rotate(-1deg); }
+    50% { transform: translateY(-18px) rotate(1deg); }
+  }
+  .pulse-ring {
+    position: absolute; border-radius: 50%; border: 2px solid rgba(20,184,176,.3);
+    animation: pulseRing 3s ease-out infinite;
+  }
+  @keyframes pulseRing {
+    0% { transform: scale(.8); opacity: 1; }
+    100% { transform: scale(2); opacity: 0; }
+  }
+
+  /* ── VIDEO ── */
+  #video { background: linear-gradient(180deg, #fff 0%, #f0fdfc 100%); }
+  .video-wrapper {
+    position: relative; border-radius: 24px; overflow: hidden;
+    box-shadow: 0 32px 80px rgba(20,184,176,.2), 0 4px 20px rgba(0,0,0,.08);
+  }
+  #yt-thumb { width:100%; height:100%; object-fit:cover; display:block; }
+  #play-btn {
+    position: absolute; inset: 0; display: flex; align-items: center; justify-content: center;
+    cursor: pointer; background: rgba(0,0,0,.2);
+    transition: background .3s;
+  }
+  #play-btn:hover { background: rgba(0,0,0,.35); }
+  .play-circle {
+    width: 72px; height: 72px; background: rgba(255,255,255,.95);
+    border-radius: 50%; display: flex; align-items: center; justify-content: center;
+    box-shadow: 0 8px 40px rgba(20,184,176,.5);
+    transition: transform .2s;
+  }
+  #play-btn:hover .play-circle { transform: scale(1.1); }
+
+  /* ── FEATURE CARDS ── */
+  .feature-card {
+    background: #fff; border-radius: 20px; padding: 2rem;
+    border: 1px solid rgba(20,184,176,.12);
+    box-shadow: 0 4px 24px rgba(20,184,176,.08);
+    transition: transform .3s, box-shadow .3s, border-color .3s;
+    position: relative; overflow: hidden;
+  }
+  .feature-card::before {
+    content: ''; position: absolute; inset: 0;
+    background: linear-gradient(135deg, rgba(20,184,176,.04) 0%, transparent 60%);
+    opacity: 0; transition: opacity .3s;
+  }
+  .feature-card:hover { transform: translateY(-6px); box-shadow: 0 16px 48px rgba(20,184,176,.18); border-color: rgba(20,184,176,.35); }
+  .feature-card:hover::before { opacity: 1; }
+  .icon-wrap {
+    width: 56px; height: 56px; background: linear-gradient(135deg, rgba(20,184,176,.15), rgba(94,232,222,.2));
+    border-radius: 16px; display: flex; align-items: center; justify-content: center;
+    margin-bottom: 1.2rem;
+  }
+
+  /* ── STATS ── */
+  .stat-card {
+    background: linear-gradient(135deg, rgba(20,184,176,.08), rgba(94,232,222,.06));
+    border: 1px solid rgba(20,184,176,.15); border-radius: 20px;
+    padding: 1.5rem 2rem; text-align: center;
+  }
+  .stat-number {
+    font-family: 'Syne', system-ui, sans-serif; font-weight: 800; font-size: 2.8rem;
+    background: linear-gradient(135deg, var(--teal), var(--teal-light));
+    -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+
+  /* ── WHY AQUAVISE ── */
+  .why-item {
+    display: flex; align-items: flex-start; gap: 1rem;
+    padding: 1.2rem; border-radius: 16px;
+    transition: background .2s;
+  }
+  .why-item:hover { background: rgba(20,184,176,.05); }
+  .check-wrap {
+    flex-shrink: 0; width: 36px; height: 36px; background: linear-gradient(135deg, var(--teal), var(--teal-light));
+    border-radius: 50%; display: flex; align-items: center; justify-content: center;
+    box-shadow: 0 4px 16px rgba(20,184,176,.3);
+  }
+
+  /* ── SLIDER ── */
+  .slider-track { display: flex; transition: transform .6s cubic-bezier(.4,0,.2,1); }
+  .slide { flex: 0 0 100%; }
+  .slide img { border-radius: 20px; width: 100%; height: 360px; object-fit: cover; }
+
+  /* ── CONTACT ── */
+  #contact { background: linear-gradient(180deg, #f0fdfc 0%, #e4f9f8 100%); }
+  .contact-card {
+    background: #fff; border-radius: 24px; padding: 2.5rem;
+    box-shadow: 0 8px 40px rgba(20,184,176,.12);
+    border: 1px solid rgba(20,184,176,.15);
+  }
+  .social-link {
+    width: 44px; height: 44px; border-radius: 12px;
+    background: rgba(20,184,176,.1); border: 1px solid rgba(20,184,176,.2);
+    display: flex; align-items: center; justify-content: center;
+    transition: background .2s, transform .2s;
+  }
+  .social-link:hover { background: var(--teal); transform: translateY(-3px); }
+  .social-link:hover svg path, .social-link:hover svg rect, .social-link:hover svg circle { stroke: #fff !important; fill: none !important; }
+  .social-link:hover svg .fill-icon { fill: #fff !important; stroke: none !important; }
+
+  /* ── FOOTER ── */
+  footer { background: var(--text-dark); }
+
+  /* ── ANIMATIONS ── */
+  .fade-up {
+    opacity: 1; transform: translateY(0);
+    transition: opacity .7s ease, transform .7s ease;
+  }
+  .fade-up.visible { opacity: 1; transform: translateY(0); }
+  .fade-up.animate-ready { opacity: 0; transform: translateY(30px); }
+
+  /* ── MOBILE MENU ── */
+  #mobile-menu {
+    position: fixed; inset: 0; z-index: 999;
+    background: rgba(255,255,255,.97); backdrop-filter: blur(20px);
+    display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2.5rem;
+    transform: translateX(100%); transition: transform .35s cubic-bezier(.4,0,.2,1);
+  }
+  #mobile-menu.open { transform: translateX(0); }
+  .mob-link {
+    font-family: 'Syne', system-ui, sans-serif; font-weight: 700; font-size: 2rem;
+    color: var(--text-dark); transition: color .2s;
+  }
+  .mob-link:hover { color: var(--teal); }
+
+  /* ── GLASSY BADGE ── */
+  .badge {
+    display: inline-flex; align-items: center; gap: .5rem;
+    background: rgba(20,184,176,.1); border: 1px solid rgba(20,184,176,.25);
+    color: var(--teal); font-size: .78rem; font-weight: 600; letter-spacing: .08em;
+    padding: .35rem 1rem; border-radius: 100px; text-transform: uppercase;
+    font-family: 'Syne', system-ui, sans-serif;
+  }
+  .badge-dot { width: 6px; height: 6px; background: var(--teal); border-radius: 50%; animation: blink 1.5s ease infinite; }
+  @keyframes blink { 0%,100%{opacity:1} 50%{opacity:.3} }
+
+  /* Scrollbar */
+  ::-webkit-scrollbar { width: 6px; }
+  ::-webkit-scrollbar-track { background: #f0fdfc; }
+  ::-webkit-scrollbar-thumb { background: var(--teal); border-radius: 3px; }
+
+  /* Wave animation */
+  .wave-path { animation: wavePath 4s ease-in-out infinite; }
+  @keyframes wavePath {
+    0%,100% { d: path("M 0 60 Q 100 20 200 60 Q 300 100 400 60 Q 500 20 600 60 L 600 120 L 0 120 Z"); }
+    50% { d: path("M 0 60 Q 100 100 200 60 Q 300 20 400 60 Q 500 100 600 60 L 600 120 L 0 120 Z"); }
+  }
+
+  /* Data particles */
+  .data-dot {
+    position: absolute; width: 8px; height: 8px; border-radius: 50%;
+    background: var(--teal); opacity: 0;
+    animation: dataPulse 3s ease-in-out infinite;
+  }
+  @keyframes dataPulse {
+    0% { opacity: 0; transform: scale(0); }
+    50% { opacity: .8; transform: scale(1); }
+    100% { opacity: 0; transform: scale(0); }
+  }
+</style>
+</head>
+<body>
+
+<!-- ═══ NAVBAR ═══ -->
+<nav id="navbar">
+  <div class="max-w-7xl mx-auto flex items-center justify-between">
+    <!-- Logo -->
+    <a href="#hero" class="flex items-center">
+      <img src="data:image/png;base64,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" alt="AquaVise Logo" style="height:52px;width:auto;object-fit:contain"/>
+    </a>
+    <!-- Desktop Links -->
+    <div class="hidden md:flex items-center gap-8">
+      <a href="#hero" class="nav-link">Home</a>
+      <a href="#features" class="nav-link">Features</a>
+      <a href="#about" class="nav-link">About</a>
+      <a href="#contact" class="nav-link">Contact</a>
+      <a href="#contact" class="btn-primary" style="padding:.6rem 1.4rem;font-size:.82rem">Pre-Order Now</a>
+    </div>
+    <!-- Hamburger -->
+    <button id="ham-btn" class="md:hidden flex flex-col gap-1.5 p-2" aria-label="Menu">
+      <span class="ham-bar block w-6 h-0.5 rounded-full transition-all" style="background:var(--text-dark)"></span>
+      <span class="ham-bar block w-6 h-0.5 rounded-full transition-all" style="background:var(--text-dark)"></span>
+      <span class="ham-bar block w-6 h-0.5 rounded-full transition-all" style="background:var(--text-dark)"></span>
+    </button>
+  </div>
+</nav>
+
+<!-- Mobile Menu -->
+<div id="mobile-menu">
+  <button id="close-menu" class="absolute top-6 right-6" style="font-size:1.8rem;color:var(--text-mid)">✕</button>
+  <a href="#hero" class="mob-link">Home</a>
+  <a href="#features" class="mob-link">Features</a>
+  <a href="#about" class="mob-link">About</a>
+  <a href="#contact" class="mob-link">Contact</a>
+  <a href="#contact" class="btn-primary">Pre-Order Now</a>
+</div>
+
+<!-- ═══ HERO ═══ -->
+<section id="hero" class="relative">
+  <div class="hero-orb hero-orb-1"></div>
+  <div class="hero-orb hero-orb-2"></div>
+
+  <div class="max-w-7xl mx-auto px-6 lg:px-8 py-32 relative z-10">
+    <div class="grid lg:grid-cols-2 gap-16 items-center">
+
+      <!-- Left text -->
+      <div class="fade-up">
+        <div class="badge mb-6">
+          <span class="badge-dot"></span>
+          AI-Powered Aquaculture
+        </div>
+        <h1 style="font-family:'Syne',system-ui,sans-serif;font-weight:800;font-size:clamp(2.4rem,5vw,3.8rem);line-height:1.1;color:var(--text-dark);letter-spacing:-.02em">
+          Smarter Fish<br/>
+          Farming<br/>
+          <span style="background:linear-gradient(135deg,var(--teal),var(--teal-light));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text">Starts Here.</span>
+        </h1>
+        <p style="margin-top:1.5rem;font-size:1.1rem;line-height:1.7;color:var(--text-mid);max-width:460px">
+          AquaVise uses AI and real-time monitoring to optimize water quality, increase yield, and reduce waste — giving every farmer the power of precision aquaculture.
+        </p>
+        <div class="flex flex-wrap gap-4 mt-8">
+          <a href="#contact" class="btn-primary">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none"><path d="M5 12h14M12 5l7 7-7 7" stroke="#fff" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            Pre-Order Now
+          </a>
+          <a href="#video" class="btn-outline">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="2"/><path d="M10 8l6 4-6 4V8z" fill="currentColor"/></svg>
+            Watch Demo
+          </a>
+        </div>
+
+        <!-- Mini stats -->
+        <div class="flex gap-6 mt-10 flex-wrap">
+          <div>
+            <div style="font-family:'Syne',system-ui,sans-serif;font-weight:800;font-size:1.6rem;color:var(--teal)">40%</div>
+            <div style="font-size:.82rem;color:var(--text-muted);font-weight:500">Yield Increase</div>
+          </div>
+          <div style="width:1px;background:rgba(20,184,176,.2)"></div>
+          <div>
+            <div style="font-family:'Syne',system-ui,sans-serif;font-weight:800;font-size:1.6rem;color:var(--teal)">60%</div>
+            <div style="font-size:.82rem;color:var(--text-muted);font-weight:500">Water Saved</div>
+          </div>
+          <div style="width:1px;background:rgba(20,184,176,.2)"></div>
+          <div>
+            <div style="font-family:'Syne',system-ui,sans-serif;font-weight:800;font-size:1.6rem;color:var(--teal)">24/7</div>
+            <div style="font-size:.82rem;color:var(--text-muted);font-weight:500">AI Monitoring</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Right: Animated Fish Illustration -->
+      <div class="hidden lg:flex justify-center items-center relative fade-up" style="transition-delay:.2s">
+        <!-- Glow rings -->
+        <div class="pulse-ring" style="width:300px;height:300px;left:50%;top:50%;transform:translate(-50%,-50%);animation-delay:0s"></div>
+        <div class="pulse-ring" style="width:300px;height:300px;left:50%;top:50%;transform:translate(-50%,-50%);animation-delay:1s"></div>
+        <div class="pulse-ring" style="width:300px;height:300px;left:50%;top:50%;transform:translate(-50%,-50%);animation-delay:2s"></div>
+
+        <!-- Fish SVG -->
+        <div class="fish-container flex items-center justify-center">
+          <svg class="fish-svg" viewBox="0 0 500 400" xmlns="http://www.w3.org/2000/svg" style="width:100%;max-width:440px">
+            <!-- Gradient defs -->
+            <defs>
+              <linearGradient id="fishGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+                <stop offset="0%" style="stop-color:#14b8b0;stop-opacity:1"/>
+                <stop offset="100%" style="stop-color:#5ee8de;stop-opacity:1"/>
+              </linearGradient>
+              <linearGradient id="fishBodyGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+                <stop offset="0%" style="stop-color:#e0f7f6;stop-opacity:1"/>
+                <stop offset="100%" style="stop-color:#f0fdfc;stop-opacity:1"/>
+              </linearGradient>
+              <filter id="glow">
+                <feGaussianBlur stdDeviation="4" result="blur"/>
+                <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
+              </filter>
+            </defs>
+
+            <!-- Background circle -->
+            <circle cx="250" cy="185" r="160" fill="rgba(20,184,176,.06)" stroke="rgba(20,184,176,.15)" stroke-width="1"/>
+            <circle cx="250" cy="185" r="120" fill="rgba(20,184,176,.04)" stroke="rgba(20,184,176,.1)" stroke-width="1"/>
+
+            <!-- Fish body -->
+            <ellipse cx="255" cy="180" rx="130" ry="80" fill="url(#fishBodyGrad)" stroke="url(#fishGrad)" stroke-width="3" filter="url(#glow)"/>
+
+            <!-- Tail fin -->
+            <path d="M 125 180 L 70 130 L 80 180 L 70 230 Z" fill="none" stroke="url(#fishGrad)" stroke-width="3" stroke-linejoin="round"/>
+
+            <!-- Top fin -->
+            <path d="M 210 100 Q 230 70 260 100" fill="none" stroke="url(#fishGrad)" stroke-width="2.5" stroke-linecap="round"/>
+
+            <!-- Bottom fin -->
+            <path d="M 215 258 Q 235 275 255 258" fill="none" stroke="url(#fishGrad)" stroke-width="2.5" stroke-linecap="round"/>
+
+            <!-- Eye -->
+            <circle cx="340" cy="165" r="10" fill="none" stroke="url(#fishGrad)" stroke-width="2.5"/>
+            <circle cx="342" cy="165" r="4" fill="url(#fishGrad)"/>
+
+            <!-- Circuit board lines -->
+            <line x1="180" y1="175" x2="230" y2="175" stroke="url(#fishGrad)" stroke-width="2" stroke-linecap="round" opacity=".7"/>
+            <line x1="230" y1="175" x2="230" y2="155" stroke="url(#fishGrad)" stroke-width="2" stroke-linecap="round" opacity=".7"/>
+            <line x1="230" y1="155" x2="270" y2="155" stroke="url(#fishGrad)" stroke-width="2" stroke-linecap="round" opacity=".7"/>
+            <line x1="230" y1="175" x2="230" y2="200" stroke="url(#fishGrad)" stroke-width="2" stroke-linecap="round" opacity=".7"/>
+            <line x1="230" y1="200" x2="260" y2="200" stroke="url(#fishGrad)" stroke-width="2" stroke-linecap="round" opacity=".7"/>
+            <circle cx="180" cy="175" r="4" fill="none" stroke="url(#fishGrad)" stroke-width="2"/>
+            <circle cx="270" cy="155" r="4" fill="url(#fishGrad)" opacity=".6"/>
+            <circle cx="260" cy="200" r="4" fill="url(#fishGrad)" opacity=".6"/>
+
+            <!-- Data bars -->
+            <rect x="295" y="185" width="8" height="20" rx="2" fill="url(#fishGrad)" opacity=".5"/>
+            <rect x="307" y="175" width="8" height="30" rx="2" fill="url(#fishGrad)" opacity=".7"/>
+            <rect x="319" y="168" width="8" height="37" rx="2" fill="url(#fishGrad)" opacity=".9"/>
+
+            <!-- Wave lines below fish -->
+            <path d="M 90 290 Q 160 275 230 290 Q 300 305 370 290 Q 410 282 450 290" fill="none" stroke="url(#fishGrad)" stroke-width="2.5" stroke-linecap="round" opacity=".5"/>
+            <path d="M 80 310 Q 155 295 225 310 Q 295 325 365 310 Q 415 300 460 310" fill="none" stroke="url(#fishGrad)" stroke-width="2" stroke-linecap="round" opacity=".3"/>
+
+            <!-- Floating data dots -->
+            <circle class="data-dot" cx="160" cy="120" r="4" style="animation-delay:0s"/>
+            <circle class="data-dot" cx="360" cy="130" r="4" style="animation-delay:.8s"/>
+            <circle class="data-dot" cx="180" cy="240" r="4" style="animation-delay:1.5s"/>
+            <circle class="data-dot" cx="320" cy="245" r="4" style="animation-delay:2.2s"/>
+          </svg>
+        </div>
+
+        <!-- Floating tags -->
+        <div style="position:absolute;top:60px;right:20px;background:#fff;border:1px solid rgba(20,184,176,.2);border-radius:14px;padding:.7rem 1rem;box-shadow:0 8px 32px rgba(20,184,176,.15);animation:floatFish 4s ease-in-out infinite;animation-delay:.5s">
+          <div style="font-size:.7rem;color:var(--text-muted);font-weight:500">pH Level</div>
+          <div style="font-family:'Syne',system-ui,sans-serif;font-weight:700;font-size:1.1rem;color:var(--teal)">7.2 <span style="color:#22c55e;font-size:.7rem">▲ Normal</span></div>
+        </div>
+        <div style="position:absolute;bottom:80px;left:30px;background:#fff;border:1px solid rgba(20,184,176,.2);border-radius:14px;padding:.7rem 1rem;box-shadow:0 8px 32px rgba(20,184,176,.15);animation:floatFish 4s ease-in-out infinite;animation-delay:1.5s">
+          <div style="font-size:.7rem;color:var(--text-muted);font-weight:500">Temperature</div>
+          <div style="font-family:'Syne',system-ui,sans-serif;font-weight:700;font-size:1.1rem;color:var(--teal)">26°C <span style="color:#22c55e;font-size:.7rem">● Optimal</span></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Bottom wave -->
+  <div style="position:absolute;bottom:-1px;left:0;right:0;line-height:0">
+    <svg viewBox="0 0 1440 60" preserveAspectRatio="none" style="width:100%;height:60px">
+      <path d="M0 30 Q 360 60 720 30 Q 1080 0 1440 30 L1440 60 L0 60 Z" fill="#fff"/>
+    </svg>
+  </div>
+</section>
+
+<!-- ═══ VIDEO ═══ -->
+<section id="video" class="py-24 px-6">
+  <div class="max-w-4xl mx-auto text-center fade-up">
+    <div class="badge mb-4 justify-center">Product Demo</div>
+    <h2 style="font-family:'Syne',system-ui,sans-serif;font-weight:800;font-size:clamp(1.8rem,3.5vw,2.8rem);color:var(--text-dark);letter-spacing:-.02em;margin-bottom:1rem">
+      See AquaVise in Action
+    </h2>
+    <p style="color:var(--text-mid);font-size:1.05rem;max-width:520px;margin:0 auto 2.5rem">
+      Watch how our smart aquaculture system transforms traditional fish farming with live AI insights.
+    </p>
+
+    <div class="video-wrapper" style="aspect-ratio:9/16;position:relative;max-width:360px;margin:0 auto">
+      <!-- YouTube thumbnail -->
+      <img id="yt-thumb" src="https://img.youtube.com/vi/tJkgl79aqD8/maxresdefault.jpg" alt="AquaVise Demo Video" style="width:100%;height:100%;object-fit:cover"/>
+      <div id="play-btn" onclick="loadVideo()">
+        <div class="play-circle">
+          <svg width="28" height="28" viewBox="0 0 24 24" fill="none">
+            <path d="M6 4l14 8-14 8V4z" fill="var(--teal)"/>
+          </svg>
+        </div>
+      </div>
+      <iframe id="yt-iframe" style="display:none;position:absolute;inset:0;width:100%;height:100%;border:none" allowfullscreen allow="autoplay; encrypted-media"></iframe>
+    </div>
+  </div>
+</section>
+
+<!-- ═══ FEATURES ═══ -->
+<section id="features" class="py-24 px-6" style="background:linear-gradient(180deg,#fff 0%,#f0fdfc 100%)">
+  <div class="max-w-6xl mx-auto">
+    <div class="text-center mb-16 fade-up">
+      <div class="badge mb-4 justify-center">Core Technology</div>
+      <h2 style="font-family:'Syne',system-ui,sans-serif;font-weight:800;font-size:clamp(1.8rem,3.5vw,2.8rem);color:var(--text-dark);letter-spacing:-.02em">
+        Precision at Every Level
+      </h2>
+      <p style="margin-top:1rem;color:var(--text-mid);font-size:1.05rem;max-width:480px;margin-left:auto;margin-right:auto">
+        Three interconnected systems working together to maximize your farm's output and sustainability.
+      </p>
+    </div>
+
+    <div class="grid md:grid-cols-3 gap-8">
+      <!-- Card 1: Smart Monitoring -->
+      <div class="feature-card fade-up">
+        <div class="icon-wrap">
+          <svg width="28" height="28" viewBox="0 0 24 24" fill="none">
+            <path d="M12 2a10 10 0 1 0 10 10A10 10 0 0 0 12 2z" stroke="var(--teal)" stroke-width="1.5"/>
+            <path d="M12 6v6l4 2" stroke="var(--teal)" stroke-width="2" stroke-linecap="round"/>
+            <circle cx="12" cy="12" r="2" fill="var(--teal)"/>
+            <path d="M2 12h3M19 12h3M12 2v3M12 19v3" stroke="var(--teal-light)" stroke-width="1.5" stroke-linecap="round"/>
+          </svg>
+        </div>
+        <h3 style="font-family:'Syne',system-ui,sans-serif;font-weight:700;font-size:1.2rem;color:var(--text-dark);margin-bottom:.6rem">Smart Monitoring</h3>
+        <p style="color:var(--text-mid);font-size:.95rem;line-height:1.6">Real-time tracking of pH, turbidity, dissolved oxygen & temperature — visualized on your dashboard 24/7.</p>
+        <div style="margin-top:1.5rem;padding-top:1.2rem;border-top:1px solid rgba(20,184,176,.12)">
+          <div style="display:flex;gap:.5rem;flex-wrap:wrap">
+            <span style="font-size:.72rem;background:rgba(20,184,176,.1);color:var(--teal);padding:.25rem .7rem;border-radius:100px;font-weight:600">pH Sensor</span>
+            <span style="font-size:.72rem;background:rgba(20,184,176,.1);color:var(--teal);padding:.25rem .7rem;border-radius:100px;font-weight:600">Turbidity</span>
+            <span style="font-size:.72rem;background:rgba(20,184,176,.1);color:var(--teal);padding:.25rem .7rem;border-radius:100px;font-weight:600">Temp</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Card 2: AI Optimization -->
+      <div class="feature-card fade-up" style="transition-delay:.1s">
+        <div class="icon-wrap">
+          <svg width="28" height="28" viewBox="0 0 24 24" fill="none">
+            <rect x="3" y="3" width="7" height="7" rx="1.5" stroke="var(--teal)" stroke-width="1.5"/>
+            <rect x="14" y="3" width="7" height="7" rx="1.5" stroke="var(--teal)" stroke-width="1.5"/>
+            <rect x="3" y="14" width="7" height="7" rx="1.5" stroke="var(--teal)" stroke-width="1.5"/>
+            <rect x="14" y="14" width="7" height="7" rx="1.5" stroke="var(--teal)" stroke-width="1.5"/>
+            <circle cx="6.5" cy="6.5" r="1.5" fill="var(--teal)"/>
+            <circle cx="17.5" cy="6.5" r="1.5" fill="var(--teal-light)"/>
+            <circle cx="6.5" cy="17.5" r="1.5" fill="var(--teal-light)"/>
+            <circle cx="17.5" cy="17.5" r="1.5" fill="var(--teal)"/>
+          </svg>
+        </div>
+        <h3 style="font-family:'Syne',system-ui,sans-serif;font-weight:700;font-size:1.2rem;color:var(--text-dark);margin-bottom:.6rem">AI Optimization</h3>
+        <p style="color:var(--text-mid);font-size:.95rem;line-height:1.6">Intelligent insights and predictive alerts for maximum fish growth — our AI learns your pond's unique patterns over time.</p>
+        <div style="margin-top:1.5rem;padding-top:1.2rem;border-top:1px solid rgba(20,184,176,.12)">
+          <div style="display:flex;gap:.5rem;flex-wrap:wrap">
+            <span style="font-size:.72rem;background:rgba(20,184,176,.1);color:var(--teal);padding:.25rem .7rem;border-radius:100px;font-weight:600">Predictive</span>
+            <span style="font-size:.72rem;background:rgba(20,184,176,.1);color:var(--teal);padding:.25rem .7rem;border-radius:100px;font-weight:600">Alerts</span>
+            <span style="font-size:.72rem;background:rgba(20,184,176,.1);color:var(--teal);padding:.25rem .7rem;border-radius:100px;font-weight:600">ML Models</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Card 3: Water Recycling -->
+      <div class="feature-card fade-up" style="transition-delay:.2s">
+        <div class="icon-wrap">
+          <svg width="28" height="28" viewBox="0 0 24 24" fill="none">
+            <path d="M12 3C8 7 4 9 4 13a8 8 0 0 0 16 0c0-4-4-6-8-10z" stroke="var(--teal)" stroke-width="1.5" stroke-linejoin="round"/>
+            <path d="M9 15l2 2 4-4" stroke="var(--teal)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+        </div>
+        <h3 style="font-family:'Syne',system-ui,sans-serif;font-weight:700;font-size:1.2rem;color:var(--text-dark);margin-bottom:.6rem">Water Recycling</h3>
+        <p style="color:var(--text-mid);font-size:.95rem;line-height:1.6">Sustainable water reuse and waste reduction systems that cut costs and protect the environment simultaneously.</p>
+        <div style="margin-top:1.5rem;padding-top:1.2rem;border-top:1px solid rgba(20,184,176,.12)">
+          <div style="display:flex;gap:.5rem;flex-wrap:wrap">
+            <span style="font-size:.72rem;background:rgba(20,184,176,.1);color:var(--teal);padding:.25rem .7rem;border-radius:100px;font-weight:600">Eco-Friendly</span>
+            <span style="font-size:.72rem;background:rgba(20,184,176,.1);color:var(--teal);padding:.25rem .7rem;border-radius:100px;font-weight:600">Reuse</span>
+            <span style="font-size:.72rem;background:rgba(20,184,176,.1);color:var(--teal);padding:.25rem .7rem;border-radius:100px;font-weight:600">Savings</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══ WHY AQUAVISE ═══ -->
+<section id="about" class="py-24 px-6" style="background:#fff">
+  <div class="max-w-6xl mx-auto">
+    <div class="grid lg:grid-cols-2 gap-16 items-center">
+
+      <!-- Left: Stats -->
+      <div class="fade-up">
+        <div class="badge mb-6">Impact Numbers</div>
+        <h2 style="font-family:'Syne',system-ui,sans-serif;font-weight:800;font-size:clamp(1.8rem,3.5vw,2.8rem);color:var(--text-dark);letter-spacing:-.02em;margin-bottom:1rem">
+          Built for the Future<br/>of Aquaculture
+        </h2>
+        <p style="color:var(--text-mid);font-size:1.05rem;line-height:1.7;margin-bottom:2rem">
+          We combine cutting-edge sensors with machine learning to give fish farmers the tools they need to thrive in a changing world.
+        </p>
+
+        <div class="grid grid-cols-2 gap-4">
+          <div class="stat-card fade-up">
+            <div class="stat-number" id="stat1">0%</div>
+            <div style="font-size:.82rem;color:var(--text-muted);font-weight:500;margin-top:.3rem">Fish Survival Rate</div>
+          </div>
+          <div class="stat-card fade-up" style="transition-delay:.1s">
+            <div class="stat-number" id="stat2">0%</div>
+            <div style="font-size:.82rem;color:var(--text-muted);font-weight:500;margin-top:.3rem">Water Waste Reduction</div>
+          </div>
+          <div class="stat-card fade-up" style="transition-delay:.2s">
+            <div class="stat-number" id="stat3">0%</div>
+            <div style="font-size:.82rem;color:var(--text-muted);font-weight:500;margin-top:.3rem">Cost Reduction</div>
+          </div>
+          <div class="stat-card fade-up" style="transition-delay:.3s">
+            <div class="stat-number" id="stat4">0+</div>
+            <div style="font-size:.82rem;color:var(--text-muted);font-weight:500;margin-top:.3rem">Farms Supported</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Right: Why list -->
+      <div class="fade-up" style="transition-delay:.2s">
+        <div style="background:linear-gradient(135deg,#f0fdfc,#e4f9f8);border-radius:24px;padding:2rem">
+          <div class="why-item">
+            <div class="check-wrap">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none"><path d="M5 12l5 5L20 7" stroke="#fff" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            </div>
+            <div>
+              <div style="font-family:'Syne',system-ui,sans-serif;font-weight:700;font-size:1rem;color:var(--text-dark);margin-bottom:.2rem">Increase Fish Survival Rates</div>
+              <div style="font-size:.9rem;color:var(--text-mid);line-height:1.5">Continuous monitoring catches threats before they become losses.</div>
+            </div>
+          </div>
+          <div class="why-item">
+            <div class="check-wrap">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none"><path d="M5 12l5 5L20 7" stroke="#fff" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            </div>
+            <div>
+              <div style="font-family:'Syne',system-ui,sans-serif;font-weight:700;font-size:1rem;color:var(--text-dark);margin-bottom:.2rem">Reduce Water Waste</div>
+              <div style="font-size:.9rem;color:var(--text-mid);line-height:1.5">Smart recycling systems conserve up to 60% more water per cycle.</div>
+            </div>
+          </div>
+          <div class="why-item">
+            <div class="check-wrap">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none"><path d="M5 12l5 5L20 7" stroke="#fff" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            </div>
+            <div>
+              <div style="font-family:'Syne',system-ui,sans-serif;font-weight:700;font-size:1rem;color:var(--text-dark);margin-bottom:.2rem">Lower Farming Costs</div>
+              <div style="font-size:.9rem;color:var(--text-mid);line-height:1.5">Optimize feed, water, and energy spending with data-backed decisions.</div>
+            </div>
+          </div>
+          <div class="why-item">
+            <div class="check-wrap">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none"><path d="M5 12l5 5L20 7" stroke="#fff" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            </div>
+            <div>
+              <div style="font-family:'Syne',system-ui,sans-serif;font-weight:700;font-size:1rem;color:var(--text-dark);margin-bottom:.2rem">Data-Driven Decision Making</div>
+              <div style="font-size:.9rem;color:var(--text-mid);line-height:1.5">Beautiful dashboards give you actionable insights at a glance.</div>
+            </div>
+          </div>
+          <div class="why-item">
+            <div class="check-wrap">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none"><path d="M5 12l5 5L20 7" stroke="#fff" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            </div>
+            <div>
+              <div style="font-family:'Syne',system-ui,sans-serif;font-weight:700;font-size:1rem;color:var(--text-dark);margin-bottom:.2rem">Works for Small & Large Farms</div>
+              <div style="font-size:.9rem;color:var(--text-mid);line-height:1.5">Scalable technology built for every aquaculture operation size.</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══ TEAM ═══ -->
+<section class="py-20 px-6" style="background:linear-gradient(180deg,#f0fdfc 0%,#fff 100%)">
+  <div class="max-w-5xl mx-auto text-center fade-up">
+    <div class="badge mb-4 justify-center">The Team</div>
+    <h2 style="font-family:'Syne',system-ui,sans-serif;font-weight:800;font-size:clamp(1.6rem,3vw,2.4rem);color:var(--text-dark);letter-spacing:-.02em;margin-bottom:1rem">
+      Passionate Builders,<br/>Solving Real Problems
+    </h2>
+    <p style="color:var(--text-mid);font-size:1rem;max-width:460px;margin:0 auto 2.5rem">
+      Our team competed at the Hult Prize at Ladoke Akintola University of Technology — building tech that puts African aquaculture farmers first.
+    </p>
+
+    <!-- Image Slider -->
+    <div style="position:relative;overflow:hidden;border-radius:24px;box-shadow:0 16px 60px rgba(20,184,176,.15)">
+      <div id="slider-track" class="slider-track">
+        <div class="slide">
+          <img src="https://hebbkx1anhila5yf.public.blob.vercel-storage.com/Hult%20Prize-26-s2GLXXJFuHnfWMnG5hDg7zUvHTbNmh.jpg" alt="Team at Hult Prize competition">
+        </div>
+        <div class="slide">
+          <img src="https://hebbkx1anhila5yf.public.blob.vercel-storage.com/IMG_2530.JPG-zItf3zZX45fpbALQV3d5rwZERDh46D.jpeg" alt="Team member with AquaVise device">
+        </div>
+        <div class="slide">
+          <img src="https://hebbkx1anhila5yf.public.blob.vercel-storage.com/IMG-20250816-WA0027-LvrF6LYywNoQ1USiteLHyzlETUKwwu.jpg" alt="AquaVise team outdoors">
+        </div>
+        <div class="slide">
+          <img src="https://hebbkx1anhila5yf.public.blob.vercel-storage.com/Lagos%20State%20youth%20engagement-OBqhknWEXy1Y6pEwFtaSCTU1gfYrEB.jpg" alt="Team at Lagos State Youth Engagement event">
+        </div>
+      </div>
+
+      <!-- Slider controls -->
+      <button onclick="prevSlide()" style="position:absolute;left:16px;top:50%;transform:translateY(-50%);width:44px;height:44px;background:rgba(255,255,255,.9);border-radius:50%;display:flex;align-items:center;justify-content:center;border:none;cursor:pointer;box-shadow:0 4px 16px rgba(0,0,0,.15);transition:transform .2s" onmouseover="this.style.transform='translateY(-50%) scale(1.1)'" onmouseout="this.style.transform='translateY(-50%) scale(1)'">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M15 18l-6-6 6-6" stroke="var(--teal)" stroke-width="2.5" stroke-linecap="round"/></svg>
+      </button>
+      <button onclick="nextSlide()" style="position:absolute;right:16px;top:50%;transform:translateY(-50%);width:44px;height:44px;background:rgba(255,255,255,.9);border-radius:50%;display:flex;align-items:center;justify-content:center;border:none;cursor:pointer;box-shadow:0 4px 16px rgba(0,0,0,.15);transition:transform .2s" onmouseover="this.style.transform='translateY(-50%) scale(1.1)'" onmouseout="this.style.transform='translateY(-50%) scale(1)'">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M9 18l6-6-6-6" stroke="var(--teal)" stroke-width="2.5" stroke-linecap="round"/></svg>
+      </button>
+
+      <!-- Dots -->
+      <div id="slider-dots" style="position:absolute;bottom:16px;left:50%;transform:translateX(-50%);display:flex;gap:.5rem">
+        <button class="dot active" onclick="goSlide(0)"></button>
+        <button class="dot" onclick="goSlide(1)"></button>
+        <button class="dot" onclick="goSlide(2)"></button>
+        <button class="dot" onclick="goSlide(3)"></button>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══ CONTACT ═══ -->
+<section id="contact" class="py-24 px-6">
+  <div class="max-w-5xl mx-auto">
+    <div class="text-center mb-14 fade-up">
+      <div class="badge mb-4 justify-center">Get In Touch</div>
+      <h2 style="font-family:'Syne',system-ui,sans-serif;font-weight:800;font-size:clamp(1.8rem,3.5vw,2.8rem);color:var(--text-dark);letter-spacing:-.02em">
+        Ready to Transform<br/>Your Farm?
+      </h2>
+      <p style="margin-top:1rem;color:var(--text-mid);font-size:1.05rem;max-width:440px;margin-left:auto;margin-right:auto">
+        Pre-order your AquaVise unit or reach out for a personalized demo — we'd love to hear from you.
+      </p>
+    </div>
+
+    <div class="grid md:grid-cols-2 gap-8 items-start">
+      <!-- Contact Card -->
+      <div class="contact-card fade-up">
+        <h3 style="font-family:'Syne',system-ui,sans-serif;font-weight:700;font-size:1.2rem;color:var(--text-dark);margin-bottom:1.5rem">Contact Details</h3>
+
+        <a href="tel:+2348077060272" style="display:flex;align-items:center;gap:1rem;padding:.9rem;border-radius:14px;transition:background .2s;text-decoration:none" onmouseover="this.style.background='rgba(20,184,176,.05)'" onmouseout="this.style.background='transparent'">
+          <div style="width:44px;height:44px;background:linear-gradient(135deg,rgba(20,184,176,.15),rgba(94,232,222,.2));border-radius:12px;display:flex;align-items:center;justify-content:center;flex-shrink:0">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none"><path d="M22 16.9v3a2 2 0 0 1-2.2 2 19.8 19.8 0 0 1-8.6-3.1 19.5 19.5 0 0 1-6-6A19.8 19.8 0 0 1 2.1 4.2 2 2 0 0 1 4.1 2h3a2 2 0 0 1 2 1.7 12.8 12.8 0 0 0 .7 2.8 2 2 0 0 1-.4 2.1L8.1 9.9a16 16 0 0 0 6 6l1.3-1.3a2 2 0 0 1 2.1-.4 12.8 12.8 0 0 0 2.8.7A2 2 0 0 1 22 16.9z" stroke="var(--teal)" stroke-width="1.8"/></svg>
+          </div>
+          <div>
+            <div style="font-size:.75rem;color:var(--text-muted);font-weight:500">Phone</div>
+            <div style="font-weight:600;color:var(--text-dark);font-size:.95rem">+234 807 706 0272</div>
+            <div style="font-weight:600;color:var(--text-dark);font-size:.95rem">+234 902 975 7732</div>
+          </div>
+        </a>
+
+        <a href="mailto:aquavisecompany@gmail.com" style="display:flex;align-items:center;gap:1rem;padding:.9rem;border-radius:14px;transition:background .2s;text-decoration:none;margin-top:.5rem" onmouseover="this.style.background='rgba(20,184,176,.05)'" onmouseout="this.style.background='transparent'">
+          <div style="width:44px;height:44px;background:linear-gradient(135deg,rgba(20,184,176,.15),rgba(94,232,222,.2));border-radius:12px;display:flex;align-items:center;justify-content:center;flex-shrink:0">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z" stroke="var(--teal)" stroke-width="1.8"/><polyline points="22,6 12,13 2,6" stroke="var(--teal)" stroke-width="1.8"/></svg>
+          </div>
+          <div>
+            <div style="font-size:.75rem;color:var(--text-muted);font-weight:500">Email</div>
+            <div style="font-weight:600;color:var(--text-dark);font-size:.95rem">aquavisecompany&#64;gmail.com</div>
+          </div>
+        </a>
+
+        <!-- Social Links -->
+        <div style="margin-top:1.5rem;padding-top:1.5rem;border-top:1px solid rgba(20,184,176,.12)">
+          <div style="font-size:.82rem;color:var(--text-muted);font-weight:500;margin-bottom:1rem">Follow Our Journey</div>
+          <div style="display:flex;gap:.8rem">
+            <!-- Instagram -->
+            <a href="https://www.instagram.com/aquavise/" target="_blank" rel="noopener" class="social-link" title="Instagram">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
+                <rect x="2" y="2" width="20" height="20" rx="5" stroke="var(--teal)" stroke-width="1.8" class="fill-icon" style="fill:none"/>
+                <circle cx="12" cy="12" r="5" stroke="var(--teal)" stroke-width="1.8"/>
+                <circle cx="17.5" cy="6.5" r="1.5" fill="var(--teal)" class="fill-icon"/>
+              </svg>
+            </a>
+            <!-- LinkedIn -->
+            <a href="https://www.linkedin.com/company/aquavise-technologies/" target="_blank" rel="noopener" class="social-link" title="LinkedIn">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
+                <rect x="2" y="2" width="20" height="20" rx="4" stroke="var(--teal)" stroke-width="1.8" style="fill:none"/>
+                <line x1="8" y1="10" x2="8" y2="17" stroke="var(--teal)" stroke-width="1.8" stroke-linecap="round"/>
+                <line x1="8" y1="7" x2="8" y2="7.5" stroke="var(--teal)" stroke-width="2.5" stroke-linecap="round"/>
+                <path d="M12 10v7M12 13c0-2 1.5-3 3-3s3 1 3 3v4" stroke="var(--teal)" stroke-width="1.8" stroke-linecap="round"/>
+              </svg>
+            </a>
+            <!-- Facebook -->
+            <a href="https://www.facebook.com/profile.php?id=61583812605029" target="_blank" rel="noopener" class="social-link" title="Facebook">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
+                <rect x="2" y="2" width="20" height="20" rx="4" stroke="var(--teal)" stroke-width="1.8" style="fill:none"/>
+                <path d="M15 8h-2a1 1 0 0 0-1 1v3h3l-.5 3H12v6" stroke="var(--teal)" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+              </svg>
+            </a>
+          </div>
+        </div>
+      </div>
+
+      <!-- Pre-order CTA -->
+      <div class="fade-up" style="transition-delay:.15s">
+        <div style="background:linear-gradient(135deg,var(--teal),#0d9490);border-radius:24px;padding:2.5rem;position:relative;overflow:hidden">
+          <div style="position:absolute;top:-40px;right:-40px;width:160px;height:160px;background:rgba(255,255,255,.08);border-radius:50%"></div>
+          <div style="position:absolute;bottom:-20px;left:-20px;width:100px;height:100px;background:rgba(255,255,255,.06);border-radius:50%"></div>
+          <div style="position:relative">
+            <div style="font-size:.75rem;font-weight:600;letter-spacing:.1em;text-transform:uppercase;color:rgba(255,255,255,.7);margin-bottom:1rem">🚀 Early Access</div>
+            <h3 style="font-family:'Syne',system-ui,sans-serif;font-weight:800;font-size:1.6rem;color:#fff;line-height:1.2;margin-bottom:1rem">
+              Be Among the First Farms to Go Smarter
+            </h3>
+            <p style="color:rgba(255,255,255,.8);font-size:.95rem;line-height:1.6;margin-bottom:2rem">
+              Pre-order now and get early-bird pricing, priority support, and free installation assistance.
+            </p>
+            <a href="mailto:aquavisecompany@gmail.com?subject=Pre-Order%20AquaVise" style="display:inline-flex;align-items:center;gap:.5rem;background:#fff;color:var(--teal);font-family:'Syne',system-ui,sans-serif;font-weight:700;font-size:.9rem;padding:.85rem 1.8rem;border-radius:100px;text-decoration:none;box-shadow:0 8px 24px rgba(0,0,0,.2);transition:transform .2s" onmouseover="this.style.transform='translateY(-2px)'" onmouseout="this.style.transform='translateY(0)'">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none"><path d="M5 12h14M12 5l7 7-7 7" stroke="var(--teal)" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+              Pre-Order Now
+            </a>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══ FOOTER ═══ -->
+<footer class="py-10 px-6">
+  <div class="max-w-6xl mx-auto">
+    <div class="flex flex-col md:flex-row items-center justify-between gap-6 flex-wrap">
+      <div class="flex items-center">
+        <img src="data:image/png;base64,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" alt="AquaVise Logo" style="height:44px;width:auto;object-fit:contain;filter:brightness(0) invert(1)"/>
+      </div>
+      <div style="color:rgba(255,255,255,.4);font-size:.82rem;text-align:center;line-height:1.6;padding:0 1rem">
+        © 2025–2026 AquaVise Technologies. All rights reserved.<br/>
+        <em style="color:rgba(255,255,255,.3)">Supervise. Precise. Advise.</em>
+      </div>
+      <div style="display:flex;gap:1.5rem">
+        <a href="#hero" style="color:rgba(255,255,255,.45);font-size:.82rem;text-decoration:none;transition:color .2s" onmouseover="this.style.color='rgba(255,255,255,.9)'" onmouseout="this.style.color='rgba(255,255,255,.45)'">Home</a>
+        <a href="#features" style="color:rgba(255,255,255,.45);font-size:.82rem;text-decoration:none;transition:color .2s" onmouseover="this.style.color='rgba(255,255,255,.9)'" onmouseout="this.style.color='rgba(255,255,255,.45)'">Features</a>
+        <a href="#contact" style="color:rgba(255,255,255,.45);font-size:.82rem;text-decoration:none;transition:color .2s" onmouseover="this.style.color='rgba(255,255,255,.9)'" onmouseout="this.style.color='rgba(255,255,255,.45)'">Contact</a>
+      </div>
+    </div>
+  </div>
+</footer>
+
+<!-- ─────────────────── STYLES for slider dots ─────────────────── -->
+<style>
+  .dot { width:8px; height:8px; border-radius:50%; background:rgba(255,255,255,.4); border:none; cursor:pointer; transition:background .3s, transform .3s; padding:0; }
+  .dot.active { background:#fff; transform:scale(1.3); }
+</style>
+
+<!-- ─────────────────── JAVASCRIPT ─────────────────── -->
+<script>
+  /* ── Navbar scroll ── */
+  const navbar = document.getElementById('navbar');
+  window.addEventListener('scroll', () => {
+    navbar.classList.toggle('scrolled', window.scrollY > 40);
+  }, { passive: true });
+
+  /* ── Mobile menu ── */
+  const mobileMenu = document.getElementById('mobile-menu');
+  document.getElementById('ham-btn').addEventListener('click', () => mobileMenu.classList.add('open'));
+  document.getElementById('close-menu').addEventListener('click', () => mobileMenu.classList.remove('open'));
+  mobileMenu.querySelectorAll('a').forEach(a => a.addEventListener('click', () => mobileMenu.classList.remove('open')));
+
+  /* ── Fade-up intersection observer ── */
+  // Mark elements for animation after a short delay (ensures content shows even if observer fails)
+  setTimeout(() => {
+    document.querySelectorAll('.fade-up').forEach(el => el.classList.add('animate-ready'));
+    const observer = new IntersectionObserver((entries) => {
+      entries.forEach(e => { if (e.isIntersecting) { e.target.classList.add('visible'); e.target.classList.remove('animate-ready'); } });
+    }, { threshold: 0.05, rootMargin: '0px 0px -20px 0px' });
+    document.querySelectorAll('.fade-up').forEach(el => observer.observe(el));
+    // Fallback: show all after 1.5s regardless
+    setTimeout(() => {
+      document.querySelectorAll('.fade-up').forEach(el => { el.classList.add('visible'); el.classList.remove('animate-ready'); });
+    }, 1500);
+  }, 100);
+
+  /* ── Video loader ── */
+  function loadVideo() {
+    const thumb = document.getElementById('yt-thumb');
+    const playBtn = document.getElementById('play-btn');
+    const iframe = document.getElementById('yt-iframe');
+    thumb.style.display = 'none';
+    playBtn.style.display = 'none';
+    iframe.style.display = 'block';
+    iframe.src = 'https://www.youtube.com/embed/tJkgl79aqD8?autoplay=1&rel=0';
+  }
+
+  /* ── Counter animation ── */
+  const targets = { stat1: 95, stat2: 60, stat3: 35, stat4: 120 };
+  const suffixes = { stat1: '%', stat2: '%', stat3: '%', stat4: '+' };
+  let animated = false;
+  function animateCounters() {
+    if (animated) return;
+    animated = true;
+    Object.keys(targets).forEach(id => {
+      const el = document.getElementById(id);
+      const target = targets[id];
+      const suffix = suffixes[id];
+      let current = 0;
+      const step = target / 60;
+      const timer = setInterval(() => {
+        current = Math.min(current + step, target);
+        el.textContent = Math.floor(current) + suffix;
+        if (current >= target) clearInterval(timer);
+      }, 20);
+    });
+  }
+
+  // Trigger counters when about section is visible, with fallback
+  const aboutSection = document.getElementById('about');
+  if (aboutSection) {
+    const counterObs = new IntersectionObserver((entries) => {
+      if (entries[0].isIntersecting) { animateCounters(); counterObs.disconnect(); }
+    }, { threshold: 0.1, rootMargin: '0px 0px -50px 0px' });
+    counterObs.observe(aboutSection);
+    // Fallback: run counters after 2s regardless
+    setTimeout(() => { if (!animated) animateCounters(); }, 2000);
+  } else {
+    animateCounters();
+  }
+
+  /* ── Image Slider ── */
+  let currentSlide = 0;
+  const totalSlides = 4;
+  const track = document.getElementById('slider-track');
+  const dots = document.querySelectorAll('.dot');
+
+  function updateSlider() {
+    track.style.transform = `translateX(-${currentSlide * 100}%)`;
+    dots.forEach((d, i) => d.classList.toggle('active', i === currentSlide));
+  }
+  function nextSlide() {
+    currentSlide = (currentSlide + 1) % totalSlides;
+    updateSlider();
+  }
+  function prevSlide() {
+    currentSlide = (currentSlide - 1 + totalSlides) % totalSlides;
+    updateSlider();
+  }
+  function goSlide(i) {
+    currentSlide = i;
+    updateSlider();
+  }
+
+  // Auto-advance slider
+  setInterval(nextSlide, 4500);
+
+  /* ── Smooth sc
